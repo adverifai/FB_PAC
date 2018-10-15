@@ -19,11 +19,11 @@ from sklearn.metrics.pairwise import linear_kernel
 
 #%%
 # READ DATA FILES
-fb_ads_file=codecs.open('fbpac-ads-en-US.csv', 'r',encoding="utf-8")
+fb_ads_file=codecs.open('fbpac-ads-en-US.csv', 'r', encoding="utf-8")
 fb_ads_data=pd.read_csv(fb_ads_file)
 fb_ads_file.close()
 
-seeds_file=codecs.open('seeds.csv', 'r',encoding="utf-8")
+seeds_file=codecs.open('seeds.csv', 'r', encoding="utf-8")
 seeds_data=pd.read_csv(seeds_file)
 seeds_file.close()
 
