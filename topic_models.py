@@ -48,7 +48,9 @@ def create_topic_models():
     # test_topic_model('How a Pentagon deal became an identity crisis for Google', lda_model, dictionary)
 
 
-def test_topic_model(doc, lda_model, dictionary):
+def doc_topic_model(doc, lda_model, dictionary):
+    """ given a sample document, trained LDA model and its corresponding dictionary, this method prints the topics of the
+    documents and a score associated with each topic"""
     print("\n")
     bow_vector = dictionary.doc2bow(pre_process(doc))
     for index, score in sorted(lda_model[bow_vector], key=lambda tup: -1*tup[1]):
