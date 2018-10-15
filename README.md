@@ -5,8 +5,11 @@ In order to run the topic model class, we need to have two folders in the main d
 
 `
 | -> main directory
+
     |-> data
+    
     |-> models
+    
     |-> topic_models.py
 `
 
