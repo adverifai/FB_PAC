@@ -1,5 +1,5 @@
 """
-Purpose data Prepration for classification
+Purpose data classification
 Sardar 10/20/2018
 
 """
