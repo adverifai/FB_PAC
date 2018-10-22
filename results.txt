@@ -1,1 +1,1 @@
-Primary results for ad putpose detection
+Primary results for ad purpose classifier
