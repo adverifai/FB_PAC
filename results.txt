@@ -1,1 +1,11 @@
 Primary results for ad purpose classifier
+             precision    recall  f1-score   support
+
+FUNDRAISING       0.45      0.98      0.62       549
+LISTBUILDING       0.67      0.32      0.43       526
+MOBILIZATION       1.00      0.01      0.02       125
+ PERSUASION       0.58      0.16      0.25       326
+
+avg / total       0.60      0.50      0.43      1526
+
+accuracy: 0.498034
