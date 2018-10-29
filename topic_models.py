@@ -15,7 +15,7 @@ def create_topic_models_lda(processed_docs, model_name):
     # creating a dictionary of all tokens in all documents
     dictionary = gensim.corpora.Dictionary(processed_docs)
     save_file('models/LDAdict_'+model_name+'.pickle', dictionary)
-    dictionary.filter_extremes(no_below=100, no_above=0.5, keep_n=1000)
+    # dictionary.filter_extremes(no_below=100, no_above=0.5, keep_n=10000) # if we want to filter the corpus
     print("Log: dictionary is created and saved.")
 
     # creating bag of words and tf-idf corpora
@@ -37,18 +37,26 @@ def create_topic_models_lda(processed_docs, model_name):
     for idx, topic in lda_model_tf_idf.print_topics(-1):
         print('Topic: {} | Word: {}'.format(idx, topic))
 
-    # doc_topic_model('How a Pentagon deal became an identity crisis for Google', lda_model, dictionary)
-
     return lda_model_bow, lda_model_tf_idf, dictionary
 
 
-def doc_topic_model(doc, lda_model, dictionary):
+def print_doc_topics(doc, lda_model, dictionary):
     """ given a sample document, trained LDA model and its corresponding dictionary, this method prints the topics of the
     documents and a score associated with each topic"""
     print("\n")
     bow_vector = dictionary.doc2bow(pre_process(doc))
     for index, score in sorted(lda_model[bow_vector], key=lambda tup: -1*tup[1]):
         print("Score: {}\t Topic: {}".format(score, lda_model.print_topic(index, 5)))
+
+
+def docs_to_topics_vector(docs, lda_model, dictionary):
+    """ given a list of documents and a trained topic mode, this method return the topic vector
+        representation of all documents"""
+    docs_topics_vectors = []
+    for doc in docs:
+        bow_vector = dictionary.doc2bow(pre_process(doc))
+        docs_topics_vectors.append(lda_model[bow_vector])
+    return docs_topics_vectors
 
 
 def read_seeds_data():
@@ -68,7 +76,34 @@ def read_seeds_data():
     return all_docs, docs_labels
 
 
-def read_main_dataset():
+def read_test_train():
+    train_path = "fbpac-ads-en-US-train.csv"
+    test_path = "fbpac-ads-en-US-test.csv"
+    # data_path = "data/limited_sample.csv"
+    data_train = pd.read_csv(train_path, error_bad_lines=False)
+    data_test = pd.read_csv(test_path, error_bad_lines=False)
+
+    # pre processing all the documents [title:04 + message:05]
+    processed_docs = []
+
+    for index, row in data_train.iterrows():
+        try:
+            processed_record = pre_process(row[4] + " " + row[5])
+            processed_docs.append(processed_record)
+        except:
+            print("Error in pre-processing: " + str(index))
+    for index, row in data_test.iterrows():
+        try:
+            processed_record = pre_process(row[4] + " " + row[5])
+            processed_docs.append(processed_record)
+        except:
+            print("Error in pre-processing: " + str(index))
+
+    print("Log: pre processing is done.")
+    return processed_docs
+
+
+def read_main_data():
     data_path = "data/fbpac-ads-en-US.csv"
     # data_path = "data/limited_sample.csv"
     data = pd.read_csv(data_path, error_bad_lines=False)
@@ -89,9 +124,16 @@ def read_main_dataset():
     print("Log: pre processing is done.")
     return processed_docs
 
+all_docs = read_test_train()
+lda_model_bow, lda_model_tf_idf, dictionary = create_topic_models_lda(all_docs, "fbpac")
+
+
+all_docs = read_main_data()
+lda_model_bow, lda_model_tf_idf, dictionary = create_topic_models_lda(all_docs, "fbpac")
 
 all_docs, docs_labels = read_seeds_data()
 lda_model_bow, lda_model_tf_idf, dictionary = create_topic_models_lda(all_docs, "seeds")
+
 all_docs_vectors = []
 all_docs_labels = []
 for i in range(len(all_docs)):
