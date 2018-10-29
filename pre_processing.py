@@ -4,6 +4,7 @@ from nltk.stem.snowball import SnowballStemmer
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.stem.porter import *
 import numpy as np
+import re
 np.random.seed(2018)
 
 # uncomment the following two lines if your wordnet is not up-to-date
@@ -32,6 +33,8 @@ def lemmatize_stemming(text):
 
 def pre_process(text):
     result = []
+    # removing the URLs
+    text = re.sub(r'https?:\/\/.*[\r\n]*', '', text)
     for token in gensim.utils.simple_preprocess(remove_nonprintable(remove_html_tags(text))):
         if token not in gensim.parsing.preprocessing.STOPWORDS and len(token) > 3:
             result.append(lemmatize_stemming(token))
