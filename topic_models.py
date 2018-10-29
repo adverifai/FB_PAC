@@ -1,29 +1,21 @@
 import pandas as pd
+import numpy as np
 import gensim
 from gensim import models
 from utils import save_file
+from utils import model_test
+from utils import model_test_cross
+from utils import load_file
 from pre_processing import pre_process
+import json
+from pprint import pprint
 
 
-def create_topic_models():
-    data_path = "data/fbpac-ads-en-US.csv"
-    # data_path = "data/limited_sample.csv"
-    data = pd.read_csv(data_path, error_bad_lines=False)
-
-    # pre processing all the documents [title:04 + message:05]
-    processed_docs = []
-    for index, row in data.iterrows():
-        try:
-            processed_record = pre_process(row[4] + " " + row[5])
-            processed_docs.append(processed_record)
-        except:
-            print("Error in pre-processing: " + str(index))
-    print("Log: pre processing is done.")
-
+def create_topic_models_lda(processed_docs, model_name):
     # creating a dictionary of all tokens in all documents
     dictionary = gensim.corpora.Dictionary(processed_docs)
-    save_file('models/LDAdict.pickle', dictionary)
-    dictionary.filter_extremes(no_below=5, no_above=0.5, keep_n=100000)
+    save_file('models/LDAdict_'+model_name+'.pickle', dictionary)
+    dictionary.filter_extremes(no_below=100, no_above=0.5, keep_n=1000)
     print("Log: dictionary is created and saved.")
 
     # creating bag of words and tf-idf corpora
@@ -32,20 +24,22 @@ def create_topic_models():
     corpus_tf_idf = tf_idf[bow_corpus]
 
     # creating LDA model using bag of words
-    lda_model = gensim.models.LdaMulticore(bow_corpus, num_topics=2, id2word=dictionary, passes=2, workers=4)
-    save_file('models/LDAbow.pickle', lda_model)
+    lda_model_bow = gensim.models.LdaMulticore(bow_corpus, id2word=dictionary, num_topics=5, minimum_probability=0.0)
+    save_file('models/LDAbow_'+model_name+'.pickle', lda_model_bow)
     print("Log: lda model [bog] is created and saved.")
-    for idx, topic in lda_model.print_topics(-1):
+    for idx, topic in lda_model_bow.print_topics(-1):
         print('Topic: {} | Words: {}'.format(idx, topic))
 
     # creating LDA model using tf-idf
-    lda_model_tf_idf = gensim.models.LdaMulticore(corpus_tf_idf, num_topics=2, id2word=dictionary, passes=2, workers=4)
-    save_file('models/LDAtfidf.pickle', lda_model)
+    lda_model_tf_idf = gensim.models.LdaMulticore(corpus_tf_idf, id2word=dictionary, num_topics=5, minimum_probability=0.0)
+    save_file('models/LDAtfidf_'+model_name+'.pickle', lda_model_tf_idf)
     print("Log: lda model [tf-idf] is created and saved.")
     for idx, topic in lda_model_tf_idf.print_topics(-1):
         print('Topic: {} | Word: {}'.format(idx, topic))
 
-    # test_topic_model('How a Pentagon deal became an identity crisis for Google', lda_model, dictionary)
+    # doc_topic_model('How a Pentagon deal became an identity crisis for Google', lda_model, dictionary)
+
+    return lda_model_bow, lda_model_tf_idf, dictionary
 
 
 def doc_topic_model(doc, lda_model, dictionary):
@@ -57,4 +51,59 @@ def doc_topic_model(doc, lda_model, dictionary):
         print("Score: {}\t Topic: {}".format(score, lda_model.print_topic(index, 5)))
 
 
-create_topic_models()
+def read_seeds_data():
+    all_docs = []
+    docs_labels = []
+    with open('data/seeds.json') as f:
+        data = json.load(f)
+        try:
+            for item in data["not_political"]:
+                all_docs.append(pre_process(item))
+                docs_labels.append(0)
+            for item in data["political"]:
+                all_docs.append(pre_process(item))
+                docs_labels.append(1)
+        except:
+            print("Error in reading data.")
+    return all_docs, docs_labels
+
+
+def read_main_dataset():
+    data_path = "data/fbpac-ads-en-US.csv"
+    # data_path = "data/limited_sample.csv"
+    data = pd.read_csv(data_path, error_bad_lines=False)
+
+    # pre processing all the documents [title:04 + message:05]
+    processed_docs = []
+
+    # printing unique list of advertisers
+    advertisers = data.iloc[:, 16].unique()
+    np.savetxt('data/advertisers.txt', advertisers, fmt='%s')
+
+    for index, row in data.iterrows():
+        try:
+            processed_record = pre_process(row[4] + " " + row[5])
+            processed_docs.append(processed_record)
+        except:
+            print("Error in pre-processing: " + str(index))
+    print("Log: pre processing is done.")
+    return processed_docs
+
+
+all_docs, docs_labels = read_seeds_data()
+lda_model_bow, lda_model_tf_idf, dictionary = create_topic_models_lda(all_docs, "seeds")
+all_docs_vectors = []
+all_docs_labels = []
+for i in range(len(all_docs)):
+    try:
+        bow = dictionary.doc2bow(all_docs[i])
+        all_docs_vectors.append(lda_model_bow[bow])
+        all_docs_labels.append(docs_labels[i])
+    except Exception as e:
+        print(e)
+        print("Error in computing document's vector")
+# converting the 3d array to a 2d array to be used in sklearn
+n, nx, ny = np.array(all_docs_vectors).shape
+d2_all_docs = np.array(all_docs_vectors).reshape((n, nx * ny))
+model_test(d2_all_docs, np.array(all_docs_labels))
+model_test_cross(d2_all_docs, np.array(all_docs_labels))
