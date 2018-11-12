@@ -5,8 +5,10 @@ from gensim import models
 from utils import save_file
 from utils import model_test
 from utils import model_test_cross
+import pyLDAvis.gensim
 from utils import load_file
 from pre_processing import pre_process
+from gensim.models.coherencemodel import CoherenceModel
 import json
 from pprint import pprint
 
@@ -16,31 +18,54 @@ target_data_path = "data/data_visual_comma.csv"
 
 def create_topic_models_lda(processed_docs, model_name):
     # creating a dictionary of all tokens in all documents
-    dictionary = gensim.corpora.Dictionary(processed_docs)
-    save_file('models/LDAdict_'+model_name+'.pickle', dictionary)
-    # dictionary.filter_extremes(no_below=100, no_above=0.5, keep_n=10000) # if we want to filter the corpus
+    lda_dictionary = gensim.corpora.Dictionary(processed_docs)
+    save_file('models/LDAdict_'+model_name+'.pickle', lda_dictionary)
+    save_file('models/LDAdict_'+model_name+'.pickle', lda_dictionary)
+    # lda_dictionary.filter_extremes(no_below=100, no_above=0.5, keep_n=10000) # if we want to filter the corpus
     print("Log: dictionary is created and saved.")
 
     # creating bag of words and tf-idf corpora
-    bow_corpus = [dictionary.doc2bow(doc) for doc in processed_docs]
+    bow_corpus = [lda_dictionary.doc2bow(doc) for doc in processed_docs]
     tf_idf = models.TfidfModel(bow_corpus)
     corpus_tf_idf = tf_idf[bow_corpus]
 
     # creating LDA model using bag of words
-    lda_model_bow = gensim.models.LdaMulticore(bow_corpus, id2word=dictionary, num_topics=5, minimum_probability=0.0)
+    lda_model_bow = gensim.models.LdaMulticore(bow_corpus,
+                                               id2word=lda_dictionary,
+                                               workers=2,
+                                               num_topics=5,
+                                               iterations=50,
+                                               minimum_probability=0.0)
     save_file('models/LDAbow_'+model_name+'.pickle', lda_model_bow)
     print("Log: lda model [bog] is created and saved.")
     for idx, topic in lda_model_bow.print_topics(-1):
         print('Topic: {} | Words: {}'.format(idx, topic))
 
     # creating LDA model using tf-idf
-    lda_model_tf_idf = gensim.models.LdaMulticore(corpus_tf_idf, id2word=dictionary, num_topics=5, minimum_probability=0.0)
+    lda_model_tf_idf = gensim.models.LdaMulticore(corpus_tf_idf,
+                                                  id2word=lda_dictionary,
+                                                  workers=2,
+                                                  num_topics=5,
+                                                  iterations=50,
+                                                  minimum_probability=0.0)
     save_file('models/LDAtfidf_'+model_name+'.pickle', lda_model_tf_idf)
     print("Log: lda model [tf-idf] is created and saved.")
     for idx, topic in lda_model_tf_idf.print_topics(-1):
         print('Topic: {} | Word: {}'.format(idx, topic))
 
-    return lda_model_bow, lda_model_tf_idf, dictionary
+    # topic coherence
+    bow_topic_coherence_umass = CoherenceModel(model=lda_model_bow, corpus=bow_corpus, dictionary=lda_dictionary, coherence='u_mass')
+    tfidf_topic_coherence_umass = CoherenceModel(model=lda_model_tf_idf, corpus=corpus_tf_idf, dictionary=lda_dictionary, coherence='u_mass')
+    # bow_topic_coherence_cv = CoherenceModel(model=lda_model_bow, corpus=bow_corpus, dictionary=lda_dictionary, coherence='c_v')
+    # tfidf_topic_coherence_cv = CoherenceModel(model=lda_model_tf_idf, corpus=corpus_tf_idf, dictionary=lda_dictionary, coherence='c_v')
+    print(bow_topic_coherence_umass)
+    print("LDA BoW Topic Coherence [U_MASS]: " + str(bow_topic_coherence_umass.get_coherence()))
+    # print("LDA BoW Topic Coherence [C_V]: " + str(bow_topic_coherence_cv.get_coherence()))
+    print(tfidf_topic_coherence_umass)
+    print("LDA TF-IDF Topic Coherence [U_MASS]: " + str(tfidf_topic_coherence_umass.get_coherence()))
+    # print("LDA TF-IDF Topic Coherence [C_V]: " + str(tfidf_topic_coherence_cv.get_coherence()))
+
+    return lda_model_bow, lda_model_tf_idf, lda_dictionary
 
 
 def print_doc_topics(doc, lda_model, dictionary):
@@ -167,8 +192,8 @@ def read_main_data():
 # filtered_data = data.loc[data['advertiser'].isin(top_advertisers)]
 # filtered_data = filtered_data.loc[filtered_data['Segment'].isin(top_segments)]
 
-all_docs = read_test_train()
-lda_model_bow, lda_model_tf_idf, dictionary = create_topic_models_lda(all_docs, "fbpac")
+# all_docs = read_test_train()
+# lda_model_bow, lda_model_tf_idf, dictionary = create_topic_models_lda(all_docs, "fbpac")
 
 
 all_docs = read_main_data()
@@ -182,7 +207,7 @@ all_docs_labels = []
 for i in range(len(all_docs)):
     try:
         bow = dictionary.doc2bow(all_docs[i])
-        all_docs_vectors.append(lda_model_bow[bow])
+        all_docs_vectors.append(lda_model_tf_idf[bow])
         all_docs_labels.append(docs_labels[i])
     except Exception as e:
         print(e)

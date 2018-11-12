@@ -49,7 +49,7 @@ class Tokenizer(object):
 class Doc2Topic:
     def transform(self, X, **transform_params):
         docs_topics_vectors = []
-        lda_model = load_file("models/LDAtfidf_fbpac.pickle")
+        lda_model = load_file("models/LDAbow_fbpac.pickle")
         lda_dictionary = load_file("models/LDAdict_fbpac.pickle")
         for doc in X:
             try:
@@ -60,7 +60,7 @@ class Doc2Topic:
                 print("Error in computing topic vector")
         n, nx, ny = np.array(docs_topics_vectors).shape
         d2_all_docs = np.array(docs_topics_vectors).reshape((n, nx * ny))
-        return d2_all_docs
+        return d2_all_docs[:, 1::2]
 
     def fit(self, X, y=None, **fit_params):
         return self
