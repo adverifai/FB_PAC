@@ -4,6 +4,7 @@ from nltk.stem.snowball import SnowballStemmer
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.stem.porter import *
 import numpy as np
+import lxml.html.clean as clean
 import re
 np.random.seed(2018)
 
@@ -15,8 +16,9 @@ np.random.seed(2018)
 def remove_html_tags(text):
     """Remove html tags from a string"""
     import re
-    clean = re.compile('<.*?>')
-    return re.sub(clean, '', text)
+    clean = re.compile('<.*>|<.*\"')
+    result = re.sub(clean, '', text)
+    return result
 
 
 def remove_nonprintable(text):

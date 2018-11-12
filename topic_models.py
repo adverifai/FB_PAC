@@ -10,6 +10,9 @@ from pre_processing import pre_process
 import json
 from pprint import pprint
 
+data_path = "data/fbpac-ads-en-US.csv"
+target_data_path = "data/data_visual_comma.csv"
+
 
 def create_topic_models_lda(processed_docs, model_name):
     # creating a dictionary of all tokens in all documents
@@ -88,13 +91,13 @@ def read_test_train():
 
     for index, row in data_train.iterrows():
         try:
-            processed_record = pre_process(row[4] + " " + row[5])
+            processed_record = pre_process(row[5])
             processed_docs.append(processed_record)
         except:
             print("Error in pre-processing: " + str(index))
     for index, row in data_test.iterrows():
         try:
-            processed_record = pre_process(row[4] + " " + row[5])
+            processed_record = pre_process(row[5])
             processed_docs.append(processed_record)
         except:
             print("Error in pre-processing: " + str(index))
@@ -103,9 +106,23 @@ def read_test_train():
     return processed_docs
 
 
+def read_top_records(df, col_name, n):
+    ''' this method finds the top n records of a specific column in a dataframe based on
+        the count of the values in the column
+        output: a dictionary of the top n records'''
+    top_records = {}
+    res = df.groupby([col_name]).size().reset_index(name='counts').sort_values('counts', ascending=False)
+    i = 0
+    for index, row in res.iterrows():
+        if i < n:
+            top_records[row[0]] = row[1]
+            i += 1
+        else:
+            break
+    return top_records
+
+
 def read_main_data():
-    data_path = "data/fbpac-ads-en-US.csv"
-    # data_path = "data/limited_sample.csv"
     data = pd.read_csv(data_path, error_bad_lines=False)
 
     # pre processing all the documents [title:04 + message:05]
@@ -113,16 +130,42 @@ def read_main_data():
 
     # printing unique list of advertisers
     advertisers = data.iloc[:, 16].unique()
+
     np.savetxt('data/advertisers.txt', advertisers, fmt='%s')
 
     for index, row in data.iterrows():
         try:
-            processed_record = pre_process(row[4] + " " + row[5])
+            processed_record = pre_process(row[5])
             processed_docs.append(processed_record)
         except:
             print("Error in pre-processing: " + str(index))
     print("Log: pre processing is done.")
     return processed_docs
+
+
+# # getting a list of top segments
+# data = pd.read_csv(target_data_path, error_bad_lines=False)
+# res = read_top_records(data, "Segment", 20)
+# sum = 0
+# top_segments = []
+# for key, value in res.items():
+#     if "US politics" in key:
+#         sum += value
+#         top_segments.append(key)
+# print(sum)
+#
+#
+# # getting a list of top advertisers
+# top_advertisers = []
+# data = pd.read_csv(data_path, error_bad_lines=False)
+# res = read_top_records(data, "advertiser", 20)
+#
+# for key, value in res.items():
+#     top_advertisers.append(key)
+#
+# data = pd.read_csv(target_data_path, error_bad_lines=False)
+# filtered_data = data.loc[data['advertiser'].isin(top_advertisers)]
+# filtered_data = filtered_data.loc[filtered_data['Segment'].isin(top_segments)]
 
 all_docs = read_test_train()
 lda_model_bow, lda_model_tf_idf, dictionary = create_topic_models_lda(all_docs, "fbpac")
