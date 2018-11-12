@@ -1,0 +1,30 @@
+targetting
+
+About This Facebook Ad
+One reason you're seeing this ad is that Blue Wave 2018 wants to reach people who may be similar to their customers. Learn more.
+There may be other reasons you're seeing this ad, including that Blue Wave 2018 wants to reach people ages 18 and older who live or
+were recently in the United States.
+This is information based on your Facebook profile and where you've connected to the internet.
+
+'[{"target": "Age", "segment": "18 and older"}, {"target": "MinAge", "segment": "18"},
+{"target": "Retargeting", "segment": "people who may be similar to their customers"},
+{"target": "Region", "segment": "the United States"}]'
+
+
+
+
+
+One reason you're seeing this ad is that Phil Bredesen added you to a list of people they want to reach on Facebook.
+They were able to reach you because you're on a customer list that was collected by Phil Bredesen and its partners or
+you've provided them with your contact information off of Facebook.
+There may be other reasons you're seeing this ad, including that Phil
+Bredesen wants to reach people ages 18 and older who live in Tennessee.
+This is information based on your Facebook profile and where you've connected to the internet.
+
+'[{"target": "Age", "segment": "18 and older"}, {"target": "MinAge", "segment": "18"},
+ {"target": "Region", "segment": "Tennessee"}, {"target": "List"}]'
+
+
+
+URL for online Tableau
+https://public.tableau.com/shared/H6JPM6DZD?:display_count=yes
