@@ -1,3 +1,4 @@
+''' Pedram Hosseini '''
 import pandas as pd
 import numpy as np
 import gensim
@@ -12,7 +13,8 @@ from gensim.models.coherencemodel import CoherenceModel
 import json
 from pprint import pprint
 
-data_path = "data/fbpac-ads-en-US.csv"
+# data_path = "data/fbpac-ads-en-US.csv"
+data_path = "fbpac-ads-en-US-train/fbpac-ads-en-US-train.csv"
 target_data_path = "data/data_visual_comma.csv"
 
 
@@ -199,21 +201,21 @@ def read_main_data():
 all_docs = read_main_data()
 lda_model_bow, lda_model_tf_idf, dictionary = create_topic_models_lda(all_docs, "fbpac")
 
-all_docs, docs_labels = read_seeds_data()
-lda_model_bow, lda_model_tf_idf, dictionary = create_topic_models_lda(all_docs, "seeds")
+# all_docs, docs_labels = read_seeds_data()
+# lda_model_bow, lda_model_tf_idf, dictionary = create_topic_models_lda(all_docs, "seeds")
 
-all_docs_vectors = []
-all_docs_labels = []
-for i in range(len(all_docs)):
-    try:
-        bow = dictionary.doc2bow(all_docs[i])
-        all_docs_vectors.append(lda_model_tf_idf[bow])
-        all_docs_labels.append(docs_labels[i])
-    except Exception as e:
-        print(e)
-        print("Error in computing document's vector")
-# converting the 3d array to a 2d array to be used in sklearn
-n, nx, ny = np.array(all_docs_vectors).shape
-d2_all_docs = np.array(all_docs_vectors).reshape((n, nx * ny))
-model_test(d2_all_docs, np.array(all_docs_labels))
-model_test_cross(d2_all_docs, np.array(all_docs_labels))
+# all_docs_vectors = []
+# all_docs_labels = []
+# for i in range(len(all_docs)):
+#     try:
+#         bow = dictionary.doc2bow(all_docs[i])
+#         all_docs_vectors.append(lda_model_tf_idf[bow])
+#         all_docs_labels.append(docs_labels[i])
+#     except Exception as e:
+#         print(e)
+#         print("Error in computing document's vector")
+# # converting the 3d array to a 2d array to be used in sklearn
+# n, nx, ny = np.array(all_docs_vectors).shape
+# d2_all_docs = np.array(all_docs_vectors).reshape((n, nx * ny))
+# model_test(d2_all_docs, np.array(all_docs_labels))
+# model_test_cross(d2_all_docs, np.array(all_docs_labels))
